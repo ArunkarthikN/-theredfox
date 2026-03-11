@@ -1,0 +1,11 @@
+const { Pool } = require("pg");
+
+const pool = new Pool({
+  user: "foxuser",
+  host: "localhost",
+  database: "theredfox",
+  password: "xxxxxxxxxxx",
+  port: 5432,
+});
+
+module.exports = pool;

@@ -1,0 +1,53 @@
+import Link from 'next/link';
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer className="bg-white border-t border-gray-100 pt-12 pb-8 mt-12">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8">
+
+          {/* Brand Section with Logo */}
+          <div>
+            <Link href="/" className="flex items-center">
+              <img
+                src="/logo.png"
+                alt="The Red Fox Logo"
+                className="h-10 w-auto"
+              />
+            </Link>
+            <p className="text-gray-500 text-sm mt-4 max-w-xs">
+              Automated news aggregator delivering the latest in Tech, AI, and Business.
+            </p>
+          </div>
+
+          {/* Quick Links - Categories */}
+          <div className="flex flex-wrap gap-6 text-xs font-bold uppercase tracking-widest text-gray-400">
+            <Link href="/category/technology" className="hover:text-red-600 transition-colors">Tech</Link>
+            <Link href="/category/ai" className="hover:text-red-600 transition-colors">AI</Link>
+            <Link href="/category/business" className="hover:text-red-600 transition-colors">Business</Link>
+            <Link href="/category/sports" className="hover:text-red-600 transition-colors">Sports</Link>
+          </div>
+        </div>
+
+        {/* Bottom Copyright Section */}
+        <div className="border-t border-gray-50 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <p>© {currentYear} THE RED FOX. ALL RIGHTS RESERVED.</p>
+            <span className="hidden md:inline text-gray-200">|</span>
+            <div className="flex gap-4">
+              <Link href="/about" className="hover:text-gray-900">About Us</Link>
+              <Link href="/contact" className="hover:text-gray-900">Contact</Link>
+            </div>
+          </div>
+          
+          <div className="flex gap-6">
+            <Link href="/privacy" className="hover:text-gray-900">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-gray-900">Terms of Service</Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

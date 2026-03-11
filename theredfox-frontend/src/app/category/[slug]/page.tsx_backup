@@ -1,0 +1,57 @@
+import Navbar from "../../../components/Navbar";
+import ArticleCard from "../../../components/ArticleCard";
+import Link from "next/link";
+
+async function getCategoryArticles(category: string) {
+  try {
+    // We pass the category as a query parameter to your updated API
+    const res = await fetch(`http://127.0.0.1:5000/api/articles?category=${category}`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('Failed to fetch');
+    return res.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return [];
+  }
+}
+
+export default async function CategoryPage({ params }: { params: { slug: string } }) {
+  const categoryName = params.slug.charAt(0).toUpperCase() + params.slug.slice(1);
+  const articles = await getCategoryArticles(categoryName);
+
+  return (
+    <main className="bg-gray-50 min-h-screen">
+      <Navbar />
+      <div className="max-w-6xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-8 capitalize border-l-4 border-red-600 pl-4">
+          {categoryName} News
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-6">
+            {articles.length > 0 ? (
+              articles.map((a: any) => (
+                <Link key={a.id} href={`/article/${a.slug}`} className="block">
+                  <ArticleCard
+                    title={a.title}
+                    excerpt={a.summary || (a.content ? a.content.replace(/<[^>]*>/g, '').substring(0, 150) + "..." : "")}
+                  />
+                </Link>
+              ))
+            ) : (
+              <p className="text-gray-500 italic">No articles found in {categoryName}.</p>
+            )}
+          </div>
+          
+          <aside className="hidden md:block">
+             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h2 className="font-bold mb-4">About {categoryName}</h2>
+                <p className="text-sm text-gray-600">Latest updates and deep dives into the world of {categoryName.toLowerCase()}.</p>
+             </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}

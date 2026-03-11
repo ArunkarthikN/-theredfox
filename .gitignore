@@ -1,0 +1,14 @@
+# Ignore environment variables in any folder
+.env
+*/.env
+
+# Ignore dependencies
+node_modules/
+*/node_modules/
+
+# Ignore Next.js build files
+.next/
+*/.next/
+
+# Ignore system files
+.DS_Store
