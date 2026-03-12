@@ -51,78 +51,112 @@ export default async function ArticleDetail({ params }: { params: { slug: string
 
   const article = await res.json();
 
+  // Social Share Logic
+  const shareUrl = encodeURIComponent(`https://theredfox.us/article/${slug}`);
+  const shareTitle = encodeURIComponent(article.title);
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
 
-      <article className="max-w-4xl mx-auto bg-white shadow-md mt-8 p-6 md:p-10 rounded-xl">
-
-        {/* HEADER */}
-        <header className="mb-8 border-b pb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              {article.category || 'General'}
-            </span>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight mb-6">
-            {article.title}
-          </h1>
-
-          <div className="flex items-center text-sm text-gray-500 gap-4">
-            <span className="font-medium">
-              {new Date(article.published_at || article.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </span>
-
-            {article.source && (
-              <>
+      <article className="max-w-5xl mx-auto mt-8 px-4 md:px-6">
+        <div className="bg-white shadow-sm border border-gray-100 rounded-3xl overflow-hidden">
+          
+          {/* TOP HEADER AREA */}
+          <div className="p-6 md:p-12 pb-0">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded uppercase tracking-[0.2em]">
+                {article.category || 'General'}
+              </span>
+              
+              {/* VIEW COUNT DISPLAY */}
+              <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full text-gray-600">
+                  <span className="text-sm">👁️</span> {article.views || 0} Views
+                </span>
                 <span>•</span>
-                <a
-                  href={article.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-red-600 font-bold hover:underline"
-                >
-                  Source: {article.source}
-                </a>
-              </>
-            )}
+                <span>
+                  {new Date(article.published_at || article.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                  })}
+                </span>
+              </div>
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-black text-gray-900 leading-[1.1] mb-8 tracking-tighter">
+              {article.title}
+            </h1>
+
+            <div className="flex items-center gap-3 mb-10 pb-8 border-b border-gray-100">
+              <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Source:</span>
+              <Link href={article.source_url || "#"} target="_blank" className="text-sm font-black text-red-600 hover:underline">
+                {article.source || "The Red Fox"}
+              </Link>
+            </div>
           </div>
-        </header>
 
-        {/* IMAGE */}
-        {article.image && (
-          <div className="mb-10 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-            <img
-              src={article.image}
-              alt={article.title}
-              className="w-full h-auto object-cover max-h-[500px]"
-              loading="lazy"
-            />
+          {/* MAIN IMAGE */}
+          {article.image && (
+            <div className="px-6 md:px-12">
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-gray-100">
+                <img
+                  src={article.image}
+                  alt={article.title}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ARTICLE CONTENT & SIDEBAR GRID */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 p-6 md:p-12 pt-12">
+            
+            {/* LEFT SIDE: STICKY SOCIAL SHARE BAR */}
+            <aside className="lg:col-span-1">
+              <div className="flex lg:flex-col gap-3 sticky top-28">
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} target="_blank" className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:scale-110 transition-transform font-bold">f</a>
+                <a href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`} target="_blank" className="w-10 h-10 flex items-center justify-center rounded-full bg-black text-white hover:scale-110 transition-transform font-bold italic">X</a>
+                <a href={`https://api.whatsapp.com/send?text=${shareTitle}%20${shareUrl}`} target="_blank" className="w-10 h-10 flex items-center justify-center rounded-full bg-green-500 text-white hover:scale-110 transition-transform font-bold">w</a>
+                <a href={`https://t.me/share/url?url=${shareUrl}&text=${shareTitle}`} target="_blank" className="w-10 h-10 flex items-center justify-center rounded-full bg-sky-500 text-white hover:scale-110 transition-transform font-bold">t</a>
+              </div>
+            </aside>
+
+            {/* CENTER: BODY CONTENT */}
+            <div className="lg:col-span-11">
+<div
+  className="prose prose-lg max-w-none text-gray-800
+  [&>p]:mb-8 [&>p]:leading-8 [&>p]:text-[18px]
+  prose-strong:text-red-600 prose-strong:font-bold
+  prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-2xl"
+  dangerouslySetInnerHTML={{
+    __html: article.content
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/\n/g, "<br/>")
+      .replace(/^/, "<p>")
+      .replace(/$/, "</p>")
+  }}
+/>
+   {/* SOCIAL MEDIA SHARE CARD VIEW */}
+              <div className="mt-20 p-8 md:p-12 bg-gray-900 rounded-[2rem] text-center shadow-2xl">
+                <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-6">Share this story</p>
+                <h3 className="text-2xl md:text-3xl font-black text-white mb-8 tracking-tighter">Did you find this insightful? <br/> Spread the knowledge.</h3>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <a href={`https://api.whatsapp.com/send?text=${shareTitle}%20${shareUrl}`} target="_blank" className="px-8 py-3 bg-green-500 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-green-600 transition-colors">WhatsApp</a>
+                  <a href={`https://t.me/share/url?url=${shareUrl}&text=${shareTitle}`} target="_blank" className="px-8 py-3 bg-sky-500 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-sky-600 transition-colors">Telegram</a>
+                  <a href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`} target="_blank" className="px-8 py-3 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors">Post on X</a>
+                </div>
+              </div>
+
+              {/* BACK BUTTON */}
+              <div className="mt-16 text-center">
+                <Link href="/" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-red-600 transition-colors">
+                  <span className="text-lg">←</span> Back to Latest News
+                </Link>
+              </div>
+            </div>
+
           </div>
-        )}
-
-        {/* CONTENT */}
-        <div
-          className="article-content prose prose-lg max-w-none text-gray-800 leading-relaxed font-serif"
-          dangerouslySetInnerHTML={{ __html: article.content }}
-        />
-
-        {/* FOOTER */}
-        <footer className="mt-12 pt-8 border-t border-gray-100">
-          <Link
-            href="/"
-            className="inline-flex items-center text-red-600 font-black text-lg hover:translate-x-[-4px] transition-transform"
-          >
-            <span className="mr-2 text-2xl">←</span>
-            Back to Latest News
-          </Link>
-        </footer>
-
+        </div>
       </article>
     </div>
   );

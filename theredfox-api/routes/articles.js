@@ -4,13 +4,11 @@ const router = express.Router();
 /**
  * GET /
  * Fetches articles with pagination and optional category filtering.
- * Path: theredfox.us/api/articles?page=1&limit=10&category=Business
  */
 router.get('/', async (req, res) => {
     const pool = req.app.get('db');
 
     try {
-        // 1. Extract parameters
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const category = req.query.category;
@@ -20,18 +18,15 @@ router.get('/', async (req, res) => {
         let values = [];
 
         if (category) {
-            // Use ILIKE for case-insensitive matching (e.g., 'business' matches 'Business')
             whereClause = 'WHERE category ILIKE $1';
             values = [category];
         }
 
-        // 2. Get total count for metadata
         const countQuery = `SELECT COUNT(*) FROM articles ${whereClause}`;
         const countResult = await pool.query(countQuery, values);
         const totalArticles = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalArticles / limit);
 
-        // 3. Fetch the specific page of data
         const dataValues = [...values, limit, offset];
         const dataQuery = `
             SELECT * FROM articles
@@ -60,13 +55,17 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /post/:slug
- * Fetches a single article by its slug
+ * Fetches a single article and increments the view count
  */
 router.get('/post/:slug', async (req, res) => {
     const pool = req.app.get('db');
     const { slug } = req.params;
 
     try {
+        // Increment view count in database
+        await pool.query('UPDATE articles SET views = views + 1 WHERE slug = $1', [slug]);
+
+        // Fetch the article data
         const query = 'SELECT * FROM articles WHERE slug = $1';
         const result = await pool.query(query, [slug]);
 
@@ -83,7 +82,7 @@ router.get('/post/:slug', async (req, res) => {
 
 /**
  * POST /
- * Handles incoming AI-generated articles from n8n
+ * Handles incoming AI-generated articles
  */
 router.post('/', async (req, res) => {
     const pool = req.app.get('db');
@@ -95,8 +94,8 @@ router.post('/', async (req, res) => {
 
     try {
         const query = `
-            INSERT INTO articles (title, seo_title, category, slug, content, summary, image, source, source_url, meta_description, published_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            INSERT INTO articles (title, seo_title, category, slug, content, summary, image, source, source_url, meta_description, published_at, views)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0)
             ON CONFLICT (slug) DO NOTHING
             RETURNING *;
         `;
