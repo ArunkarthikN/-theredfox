@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar"
 import ArticleCard from "../components/ArticleCard"
-import Link from "next/link" // Added Link component
+import Link from "next/link"
 
 // This forces Next.js to fetch fresh data on every request
 export const revalidate = 0;
@@ -36,10 +36,11 @@ export default async function Home() {
 
           {articles.length > 0 ? (
             articles.map((a: any) => (
-              /* Wrap the card in a Link using the slug */
               <Link key={a.id} href={`/article/${a.slug}`} className="block transition transform hover:-translate-y-1">
                 <ArticleCard
                   title={a.title}
+                  image={a.image} // Pass the image URL to the card
+                  category={a.category} // Pass the category to the card
                   excerpt={a.summary || (a.content ? a.content.replace(/<[^>]*>/g, '').substring(0, 150) + "..." : "")}
                 />
               </Link>

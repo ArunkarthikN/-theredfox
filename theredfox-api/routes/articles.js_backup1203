@@ -3,26 +3,56 @@ const router = express.Router();
 
 /**
  * GET /
- * Fetches articles with optional category filtering
- * Path: theredfox.us/api/articles?category=Business
+ * Fetches articles with pagination and optional category filtering
+ * Path: theredfox.us/api/articles?page=1&limit=10&category=Business
  */
 router.get('/', async (req, res) => {
     const pool = req.app.get('db');
-    const { category } = req.query;
-
+    
     try {
-        let query = 'SELECT * FROM articles';
+        // 1. Extract and parse pagination/filter parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const category = req.query.category;
+        const offset = (page - 1) * limit;
+
+        let whereClause = '';
         let values = [];
 
         if (category) {
-            query += ' WHERE category = $1 ORDER BY created_at DESC LIMIT 20';
+            whereClause = 'WHERE category = $1';
             values = [category];
-        } else {
-            query += ' ORDER BY created_at DESC LIMIT 20';
         }
 
-        const result = await pool.query(query, values);
-        res.json(result.rows);
+        // 2. Get total count for this specific filter (to calculate total pages)
+        const countQuery = `SELECT COUNT(*) FROM articles ${whereClause}`;
+        const countResult = await pool.query(countQuery, values);
+        const totalArticles = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalArticles / limit);
+
+        // 3. Fetch the specific page of articles
+        // We add the limit and offset parameters to the values array
+        const dataValues = [...values, limit, offset];
+        const dataQuery = `
+            SELECT * FROM articles 
+            ${whereClause} 
+            ORDER BY published_at DESC, created_at DESC 
+            LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+        `;
+
+        const result = await pool.query(dataQuery, dataValues);
+
+        // 4. Return structured response for the frontend
+        res.json({
+            articles: result.rows,
+            pagination: {
+                totalArticles,
+                totalPages,
+                currentPage: page,
+                limit
+            }
+        });
+
     } catch (error) {
         console.error("❌ DB Fetch Error:", error.message);
         res.status(500).json({
@@ -35,7 +65,6 @@ router.get('/', async (req, res) => {
 /**
  * GET /post/:slug
  * Fetches a single article by its slug (Post Name)
- * Path: theredfox.us/api/articles/post/api-security-test
  */
 router.get('/post/:slug', async (req, res) => {
     const pool = req.app.get('db');
@@ -46,18 +75,18 @@ router.get('/post/:slug', async (req, res) => {
         const result = await pool.query(query, [slug]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ 
-                error: "Not Found", 
-                message: "No article found with that slug." 
+            return res.status(404).json({
+                error: "Not Found",
+                message: "No article found with that slug."
             });
         }
 
         res.json(result.rows[0]);
     } catch (error) {
         console.error("❌ Single Fetch Error:", error.message);
-        res.status(500).json({ 
-            error: "Internal Server Error", 
-            details: error.message 
+        res.status(500).json({
+            error: "Internal Server Error",
+            details: error.message
         });
     }
 });

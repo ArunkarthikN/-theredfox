@@ -1,29 +1,31 @@
 import { Metadata } from 'next';
 import Navbar from "../../../components/Navbar";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 // --- DYNAMIC SEO METADATA GENERATOR ---
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const { slug } = params;
-  
-  try {
-    const res = await fetch(`http://127.0.0.1:5000/api/articles`, { cache: 'no-store' });
-    const articles = await res.json();
-    const article = articles.find((a: any) => a.slug === slug);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
-    if (!article) {
+  try {
+    // Fetch ONLY the specific article by slug
+    const res = await fetch(`${apiUrl}/articles/post/${slug}`, { cache: 'no-store' });
+    const article = await res.json();
+
+    if (!article || article.error) {
       return { title: 'Article Not Found | The Red Fox' };
     }
 
-    // This creates the tags for Google, Facebook (OpenGraph), and Twitter
     return {
       title: `${article.title} | The Red Fox`,
-      description: article.summary || (article.content ? article.content.replace(/<[^>]*>/g, '').substring(0, 160) : "Latest news from The Red Fox."),
+      description: article.meta_description || article.summary || "Latest news from The Red Fox.",
       openGraph: {
         title: article.title,
         description: article.summary,
-        images: [article.image || '/logo.png'], // Falls back to logo if no image
+        images: [article.image || '/logo.png'],
         type: 'article',
+        url: `https://theredfox.us/article/${slug}`,
       },
       twitter: {
         card: 'summary_large_image',
@@ -40,25 +42,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 // --- MAIN PAGE COMPONENT ---
 export default async function ArticleDetail({ params }: { params: { slug: string } }) {
   const { slug } = params;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
-  // Fetch the articles from the backend
-  const res = await fetch(`http://127.0.0.1:5000/api/articles`, { cache: 'no-store' });
-  const articles = await res.json();
-  const article = articles.find((a: any) => a.slug === slug);
-
-  if (!article) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto p-10 text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Article Not Found</h1>
-          <Link href="/" className="text-red-600 mt-4 block underline font-semibold">
-            Return to Homepage
-          </Link>
-        </div>
-      </div>
-    );
+  // Fetch only this specific article
+  const res = await fetch(`${apiUrl}/articles/post/${slug}`, { cache: 'no-store' });
+  
+  if (!res.ok) {
+    return notFound(); // Triggers the standard Next.js 404
   }
+
+  const article = await res.json();
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">

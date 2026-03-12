@@ -9,7 +9,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
   try {
-    // Fetch ONLY the specific article by slug
     const res = await fetch(`${apiUrl}/articles/post/${slug}`, { cache: 'no-store' });
     const article = await res.json();
 
@@ -44,11 +43,10 @@ export default async function ArticleDetail({ params }: { params: { slug: string
   const { slug } = params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
-  // Fetch only this specific article
   const res = await fetch(`${apiUrl}/articles/post/${slug}`, { cache: 'no-store' });
-  
+
   if (!res.ok) {
-    return notFound(); // Triggers the standard Next.js 404
+    return notFound();
   }
 
   const article = await res.json();
@@ -58,7 +56,8 @@ export default async function ArticleDetail({ params }: { params: { slug: string
       <Navbar />
 
       <article className="max-w-4xl mx-auto bg-white shadow-md mt-8 p-6 md:p-10 rounded-xl">
-        {/* --- HEADER SECTION --- */}
+
+        {/* HEADER */}
         <header className="mb-8 border-b pb-6">
           <div className="flex items-center gap-3 mb-4">
             <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
@@ -78,10 +77,16 @@ export default async function ArticleDetail({ params }: { params: { slug: string
                 day: 'numeric'
               })}
             </span>
+
             {article.source && (
               <>
                 <span>•</span>
-                <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="text-red-600 font-bold hover:underline">
+                <a
+                  href={article.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-red-600 font-bold hover:underline"
+                >
                   Source: {article.source}
                 </a>
               </>
@@ -89,29 +94,35 @@ export default async function ArticleDetail({ params }: { params: { slug: string
           </div>
         </header>
 
-        {/* --- IMAGE SECTION --- */}
+        {/* IMAGE */}
         {article.image && (
           <div className="mb-10 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
             <img
               src={article.image}
               alt={article.title}
               className="w-full h-auto object-cover max-h-[500px]"
+              loading="lazy"
             />
           </div>
         )}
 
-        {/* --- CONTENT SECTION --- */}
+        {/* CONTENT */}
         <div
-          className="prose prose-lg prose-red max-w-none text-gray-800 leading-relaxed font-serif"
+          className="article-content prose prose-lg max-w-none text-gray-800 leading-relaxed font-serif"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
-        {/* --- FOOTER SECTION --- */}
+        {/* FOOTER */}
         <footer className="mt-12 pt-8 border-t border-gray-100">
-          <Link href="/" className="inline-flex items-center text-red-600 font-black text-lg hover:translate-x-[-4px] transition-transform">
-            <span className="mr-2 text-2xl">←</span> Back to Latest News
+          <Link
+            href="/"
+            className="inline-flex items-center text-red-600 font-black text-lg hover:translate-x-[-4px] transition-transform"
+          >
+            <span className="mr-2 text-2xl">←</span>
+            Back to Latest News
           </Link>
         </footer>
+
       </article>
     </div>
   );
