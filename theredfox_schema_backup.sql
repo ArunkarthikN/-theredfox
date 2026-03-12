@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict o8ztfUvOKKBIfVcdckqMiF1c63z2vdiHRW2E99ccCNEA4S5eGTtYuTbIgei74pz
+\restrict rEjdZoMGiQXYwyomLS03oYtml4jLEXLvp91Avoka23jgtzrC4TwgsExe7SXNsYR
 
 -- Dumped from database version 17.9 (Ubuntu 17.9-0ubuntu0.25.10.1)
 -- Dumped by pg_dump version 17.9 (Ubuntu 17.9-0ubuntu0.25.10.1)
@@ -40,7 +40,8 @@ CREATE TABLE public.articles (
     meta_description text,
     published_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    category text DEFAULT 'General'::text
+    category text DEFAULT 'General'::text,
+    views integer DEFAULT 0
 );
 
 
@@ -173,5 +174,5 @@ GRANT ALL ON SEQUENCE public.categories_id_seq TO foxuser;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict o8ztfUvOKKBIfVcdckqMiF1c63z2vdiHRW2E99ccCNEA4S5eGTtYuTbIgei74pz
+\unrestrict rEjdZoMGiQXYwyomLS03oYtml4jLEXLvp91Avoka23jgtzrC4TwgsExe7SXNsYR
 

@@ -1,44 +1,68 @@
-import { MetadataRoute } from 'next'
+// Path: ~/theredfox/theredfox-frontend/src/app/sitemap.ts
+import { MetadataRoute } from 'next';
+
+// This forces the sitemap to be re-generated on every request
+export const revalidate = 3600; // Cache for 1 hour
+
+async function getSitemapArticles() {
+  try {
+    // We fetch a larger limit to ensure all articles and categories are found
+    const res = await fetch('http://127.0.0.1:5000/api/articles?limit=1000', {
+      next: { revalidate: 3600 }
+    });
+    
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.articles || [];
+  } catch (error) {
+    console.error("Sitemap fetch error:", error);
+    return [];
+  }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://theredfox.us'
+  const baseUrl = 'https://theredfox.us';
+  
+  // 1. Fetch all articles from your DB
+  const articles = await getSitemapArticles();
 
-  // Use the env variable OR the local production URL as a fallback
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://theredfox.us/api';
+  // 2. Map articles to sitemap format
+  const articleUrls = articles.map((article: any) => ({
+    url: `${baseUrl}/article/${article.slug}`,
+    lastModified: new Date(article.published_at || article.created_at),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
 
-  try {
-    const response = await fetch(`${apiUrl}/articles`, {
-      next: { revalidate: 3600 } // Cache for 1 hour to keep it fresh
-    });
+  // 3. Dynamically extract unique categories from articles
+  // This ensures that if a new category like "Sports" is added, it shows up automatically.
+  const uniqueCategories = Array.from(
+    new Set(articles.map((a: any) => a.category?.toLowerCase()).filter(Boolean))
+  );
 
-    if (!response.ok) throw new Error('Failed to fetch articles');
+  const categoryUrls = uniqueCategories.map((category) => ({
+    url: `${baseUrl}/category/${category}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.8,
+  }));
 
-    const articles = await response.json();
+  // 4. Define your truly static pages (Home, About, etc.)
+  const basePages = [
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'always' as const,
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    },
+  ];
 
-    // UPDATED: Now mapping to slugs instead of IDs for better SEO
-    const articleEntries = articles.map((article: any) => ({
-      // Use slug for the URL. If slug is missing, use ID as a fallback.
-      url: `${baseUrl}/article/${article.slug || article.id}`,
-      lastModified: new Date(article.updated_at || article.created_at),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    }));
-
-    const staticPages = [
-      { url: baseUrl, lastModified: new Date(), changeFrequency: 'always', priority: 1 },
-      { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-      { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-      { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-      { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    ];
-
-    return [...staticPages, ...articleEntries];
-  } catch (error) {
-    console.error("Sitemap build error:", error);
-    // Return at least the static pages if the API fetch fails during build
-    return [
-      { url: baseUrl, lastModified: new Date(), changeFrequency: 'always', priority: 1 },
-      { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    ];
-  }
+  // Combine everything: Base pages + Dynamic Categories + Articles
+  return [...basePages, ...categoryUrls, ...articleUrls];
 }
