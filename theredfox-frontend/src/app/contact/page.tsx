@@ -31,7 +31,6 @@ export default function ContactUs() {
               9:00 AM — 6:00 PM (IST)
             </p>
             <p className="mt-6 opacity-70 italic text-sm">
-              Chennai, Tamil Nadu, India
             </p>
           </div>
         </div>

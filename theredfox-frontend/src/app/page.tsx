@@ -30,11 +30,31 @@ async function getArticles(page: number) {
 export default async function Home({ searchParams }: { searchParams: { page?: string } }) {
   // 1. Get current page from URL or default to 1
   const currentPage = parseInt(searchParams.page || "1");
-  
+
   // 2. Fetch data
   const data = await getArticles(currentPage);
   const articles = data.articles || [];
   const pagination = data.pagination || { totalPages: 1 };
+  const totalPages = pagination.totalPages;
+
+  // 3. Logic for Responsive Pagination Numbers (Sliding Window)
+  const getVisiblePages = () => {
+    const maxVisible = 3; // Show only 3 numbers on mobile
+    let start = Math.max(1, currentPage - 1);
+    let end = Math.min(totalPages, start + (maxVisible - 1));
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - (maxVisible - 1));
+    }
+    
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      if (i > 0) pages.push(i);
+    }
+    return pages;
+  };
+
+  const visiblePages = getVisiblePages();
 
   return (
     <main className="bg-gray-50 min-h-screen">
@@ -60,40 +80,36 @@ export default async function Home({ searchParams }: { searchParams: { page?: st
                 ))}
               </div>
 
-              {/* Pagination Controls */}
-              {pagination.totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 py-10">
-                  {/* Previous Button */}
-                  {currentPage > 1 && (
+              {/* RESPONSIVE PAGINATION CONTROLS */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center gap-4 py-10">
+                  <div className="flex justify-center items-center gap-2 w-full">
+                    
+                    {/* Previous Button */}
                     <Link
-                      href={`/?page=${currentPage - 1}`}
-                      className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-50 text-sm font-bold transition-colors"
+                      href={currentPage > 1 ? `/?page=${currentPage - 1}` : "#"}
+                      className={`px-3 md:px-4 py-2 bg-white border rounded shadow-sm text-sm font-bold transition-colors ${
+                        currentPage <= 1 ? 'opacity-30 pointer-events-none' : 'hover:bg-gray-50'
+                      }`}
                     >
-                      ← Previous
+                      ← <span className="hidden sm:inline">Prev</span>
                     </Link>
-                  )}
 
-                  {/* Page Numbers */}
-                  <div className="flex gap-1">
-                    {[...Array(pagination.totalPages)].map((_, i) => {
-                      const pageNum = i + 1;
-                      
-                      // Show current page, first, last, and pages around current
-                      if (
-                        pagination.totalPages > 7 &&
-                        pageNum !== 1 &&
-                        pageNum !== pagination.totalPages &&
-                        Math.abs(pageNum - currentPage) > 1
-                      ) {
-                        if (Math.abs(pageNum - currentPage) === 2) return <span key={pageNum} className="px-1 text-gray-400">...</span>;
-                        return null;
-                      }
+                    {/* Dynamic Page Numbers */}
+                    <div className="flex gap-1 items-center">
+                      {/* Jump to First on Desktop */}
+                      {visiblePages[0] > 1 && (
+                        <>
+                          <Link href="/?page=1" className="w-10 h-10 hidden sm:flex items-center justify-center rounded border bg-white text-sm font-bold text-gray-600 hover:border-red-600">1</Link>
+                          <span className="hidden sm:inline px-1 text-gray-400">...</span>
+                        </>
+                      )}
 
-                      return (
+                      {visiblePages.map((pageNum) => (
                         <Link
                           key={pageNum}
                           href={`/?page=${pageNum}`}
-                          className={`w-10 h-10 flex items-center justify-center rounded font-bold transition-all ${
+                          className={`w-10 h-10 flex items-center justify-center rounded font-bold transition-all text-sm ${
                             currentPage === pageNum
                               ? 'bg-red-600 text-white shadow-md'
                               : 'bg-white border text-gray-600 hover:border-red-600 hover:text-red-600'
@@ -101,19 +117,32 @@ export default async function Home({ searchParams }: { searchParams: { page?: st
                         >
                           {pageNum}
                         </Link>
-                      );
-                    })}
-                  </div>
+                      ))}
 
-                  {/* Next Button */}
-                  {currentPage < pagination.totalPages && (
+                      {/* Jump to Last on Desktop */}
+                      {visiblePages[visiblePages.length - 1] < totalPages && (
+                        <>
+                          <span className="hidden sm:inline px-1 text-gray-400">...</span>
+                          <Link href={`/?page=${totalPages}`} className="w-10 h-10 hidden sm:flex items-center justify-center rounded border bg-white text-sm font-bold text-gray-600 hover:border-red-600">{totalPages}</Link>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Next Button */}
                     <Link
-                      href={`/?page=${currentPage + 1}`}
-                      className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-50 text-sm font-bold transition-colors"
+                      href={currentPage < totalPages ? `/?page=${currentPage + 1}` : "#"}
+                      className={`px-3 md:px-4 py-2 bg-white border rounded shadow-sm text-sm font-bold transition-colors ${
+                        currentPage >= totalPages ? 'opacity-30 pointer-events-none' : 'hover:bg-gray-50'
+                      }`}
                     >
-                      Next →
+                      <span className="hidden sm:inline">Next</span> →
                     </Link>
-                  )}
+                  </div>
+                  
+                  {/* Page Status Indicator for Mobile */}
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    Page {currentPage} of {totalPages}
+                  </span>
                 </div>
               )}
             </>

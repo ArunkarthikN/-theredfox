@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import Footer from "@/components/Footer"; // Ensure this file exists in src/components/
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +31,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google AdSense Verification Account */}
+        <meta name="google-adsense-account" content="ca-pub-9921838148812562" />
+
         {/* Google Analytics Script */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-BKWFVK4M3K"
@@ -48,7 +51,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        {/* Main content grows to push footer down */}
         <main className="flex-grow">
           {children}
         </main>

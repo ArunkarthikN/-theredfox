@@ -2,19 +2,40 @@ import Navbar from "../../../components/Navbar";
 import ArticleCard from "../../../components/ArticleCard";
 import Link from "next/link";
 
+// Define the shape of the params and searchParams for TypeScript
+interface PageProps {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params;
+
+  if (slug === 'technology') {
+    return {
+      title: "Latest Technology News - The Red Fox",
+      description: "Stay updated with the latest technological breakthroughs. From Silicon Valley shifts to global software innovations, The Red Fox Technology category provides the news and insights you need to stay ahead.",
+    };
+  }
+
+  // Default metadata for other categories
+  const capitalized = slug.charAt(0).toUpperCase() + slug.slice(1);
+  return {
+    title: `${capitalized} News - The Red Fox`,
+    description: `Stay updated with the latest breakthroughs and essential updates in the world of ${slug.toLowerCase()}.`,
+  };
+}
+
 // Forces fresh data on every request
 export const revalidate = 0;
 
 async function getCategoryData(category: string, page = 1) {
   try {
-    // We send the category name to the API
     const res = await fetch(`http://127.0.0.1:5000/api/articles?category=${category}&page=${page}&limit=10`, {
       cache: 'no-store'
     });
 
     if (!res.ok) throw new Error('Failed to fetch articles');
-
-    // This now returns { articles: [], pagination: { totalArticles: X, ... } }
     return res.json();
   } catch (error) {
     console.error("Fetch error:", error);
@@ -22,23 +43,18 @@ async function getCategoryData(category: string, page = 1) {
   }
 }
 
-export default async function CategoryPage({ 
-  params, 
-  searchParams 
-}: { 
-  params: { slug: string }, 
-  searchParams: { page?: string } 
-}) {
-  const currentPage = parseInt(searchParams.page || "1");
-  const categorySlug = params.slug;
-  
-  // Format display name (e.g., "business" -> "Business")
-  const categoryName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
-  
-  // Fetch the data object
-  const data = await getCategoryData(categorySlug, currentPage);
-  
-  // Extract articles and total count safely
+export default async function CategoryPage({ params, searchParams }: PageProps) {
+  // Await params and searchParams as per Next.js 15 requirements
+  const { slug } = await params;
+  const sParams = await searchParams;
+  const currentPage = parseInt(sParams.page || "1");
+
+  // Format display name
+  const categoryName = slug.charAt(0).toUpperCase() + slug.slice(1);
+
+  // Fetch the data
+  const data = await getCategoryData(slug, currentPage);
+
   const articles = data.articles || [];
   const totalCount = data.pagination?.totalArticles || 0;
   const totalPages = data.pagination?.totalPages || 1;
@@ -78,16 +94,15 @@ export default async function CategoryPage({
                   ))}
                 </div>
 
-                {/* Optional Pagination Links */}
                 {totalPages > 1 && (
                   <div className="flex justify-center gap-2 py-10">
                     {currentPage > 1 && (
-                      <Link href={`/category/${categorySlug}?page=${currentPage - 1}`} className="px-4 py-2 bg-white border rounded text-sm font-bold">
+                      <Link href={`/category/${slug}?page=${currentPage - 1}`} className="px-4 py-2 bg-white border rounded text-sm font-bold">
                         ← Previous
                       </Link>
                     )}
                     {currentPage < totalPages && (
-                      <Link href={`/category/${categorySlug}?page=${currentPage + 1}`} className="px-4 py-2 bg-white border rounded text-sm font-bold">
+                      <Link href={`/category/${slug}?page=${currentPage + 1}`} className="px-4 py-2 bg-white border rounded text-sm font-bold">
                         Next →
                       </Link>
                     )}
@@ -106,7 +121,7 @@ export default async function CategoryPage({
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
               <h2 className="font-extrabold text-xl mb-4 border-b pb-2 uppercase">About {categoryName}</h2>
               <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                Stay updated with the latest breakthroughs and essential updates in the world of {categoryName.toLowerCase()}.
+                Stay updated with the latest breakthroughs and essential updates in the world of {slug.toLowerCase()}.
               </p>
 
               <div className="pt-4 border-t border-gray-50 flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest">

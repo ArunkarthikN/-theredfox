@@ -10,12 +10,14 @@ export default function Navbar() {
     <nav className="w-full border-b bg-white sticky top-0 z-50 shadow-sm">
       <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
         
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-black tracking-tighter text-gray-900 uppercase">
-            THE <span className="text-red-600">RED</span> FOX
-          </span>
-        </Link>
+	{/* Logo */}
+	<Link href="/" className="flex items-center space-x-2">
+  	<img 
+    	src="/logo.png" 
+    	alt="The Red Fox Logo" 
+    	className="h-10 w-auto" // Adjust h-10 to make it larger or smaller
+  	/>
+	</Link>
 
         {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-5 text-[11px] font-black uppercase tracking-widest text-gray-500">

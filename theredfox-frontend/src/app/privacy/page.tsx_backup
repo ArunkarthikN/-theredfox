@@ -1,10 +1,5 @@
 import Navbar from "@/components/Navbar";
 
-export const metadata = {
-  title: "Privacy Policy - The Red Fox",
-  description: "Your privacy is our priority. Read The Red Fox Privacy Policy to learn how we handle your data, our commitment to transparency, and the security measures we take to protect our readers.",
-};
-
 export default function PrivacyPolicy() {
   return (
     <div className="bg-white min-h-screen">
