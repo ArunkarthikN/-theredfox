@@ -3,9 +3,14 @@ import Navbar from "../../../components/Navbar";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+// Define the shape of the props for Next.js 15
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
 // --- DYNAMIC SEO METADATA GENERATOR ---
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const { slug } = params;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
   try {
@@ -16,6 +21,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       return { title: 'Article Not Found | The Red Fox' };
     }
 
+    // Dynamic SEO values from the post data
     return {
       title: `${article.title} | The Red Fox`,
       description: article.meta_description || article.summary || "Latest news from The Red Fox.",
@@ -39,8 +45,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 // --- MAIN PAGE COMPONENT ---
-export default async function ArticleDetail({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function ArticleDetail({ params }: PageProps) {
+  const { slug } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
   const res = await fetch(`${apiUrl}/articles/post/${slug}`, { cache: 'no-store' });
@@ -61,14 +67,14 @@ export default async function ArticleDetail({ params }: { params: { slug: string
 
       <article className="max-w-5xl mx-auto mt-8 px-4 md:px-6">
         <div className="bg-white shadow-sm border border-gray-100 rounded-3xl overflow-hidden">
-          
+
           {/* TOP HEADER AREA */}
           <div className="p-6 md:p-12 pb-0">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded uppercase tracking-[0.2em]">
                 {article.category || 'General'}
               </span>
-              
+
               {/* VIEW COUNT DISPLAY */}
               <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
                 <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full text-gray-600">
@@ -110,7 +116,7 @@ export default async function ArticleDetail({ params }: { params: { slug: string
 
           {/* ARTICLE CONTENT & SIDEBAR GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 p-6 md:p-12 pt-12">
-            
+
             {/* LEFT SIDE: STICKY SOCIAL SHARE BAR */}
             <aside className="lg:col-span-1">
               <div className="flex lg:flex-col gap-3 sticky top-28">
@@ -123,20 +129,21 @@ export default async function ArticleDetail({ params }: { params: { slug: string
 
             {/* CENTER: BODY CONTENT */}
             <div className="lg:col-span-11">
-<div
-  className="prose prose-lg max-w-none text-gray-800
-  [&>p]:mb-8 [&>p]:leading-8 [&>p]:text-[18px]
-  prose-strong:text-red-600 prose-strong:font-bold
-  prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-2xl"
-  dangerouslySetInnerHTML={{
-    __html: article.content
-      .replace(/\n\n/g, "</p><p>")
-      .replace(/\n/g, "<br/>")
-      .replace(/^/, "<p>")
-      .replace(/$/, "</p>")
-  }}
-/>
-   {/* SOCIAL MEDIA SHARE CARD VIEW */}
+              <div
+                className="prose prose-lg max-w-none text-gray-800
+                [&>p]:mb-8 [&>p]:leading-8 [&>p]:text-[18px]
+                prose-strong:text-red-600 prose-strong:font-bold
+                prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-2xl"
+                dangerouslySetInnerHTML={{
+                  __html: (article.content || "")
+                    .replace(/\n\n/g, "</p><p>")
+                    .replace(/\n/g, "<br/>")
+                    .replace(/^/, "<p>")
+                    .replace(/$/, "</p>")
+                }}
+              />
+              
+              {/* SOCIAL MEDIA SHARE CARD VIEW */}
               <div className="mt-20 p-8 md:p-12 bg-gray-900 rounded-[2rem] text-center shadow-2xl">
                 <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-6">Share this story</p>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-8 tracking-tighter">Did you find this insightful? <br/> Spread the knowledge.</h3>

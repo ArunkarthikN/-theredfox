@@ -123,14 +123,20 @@ export default async function ArticleDetail({ params }: { params: { slug: string
 
             {/* CENTER: BODY CONTENT */}
             <div className="lg:col-span-11">
-              <div
-                className="prose prose-lg max-w-none text-gray-800 leading-[1.8] font-medium 
-                prose-p:mb-8 prose-strong:text-red-600 prose-strong:font-black
-                prose-headings:font-black prose-headings:tracking-tighter prose-headings:text-gray-900"
-                dangerouslySetInnerHTML={{ __html: article.content }}
-              />
-
-              {/* SOCIAL MEDIA SHARE CARD VIEW */}
+<div
+  className="prose prose-lg max-w-none text-gray-800
+  [&>p]:mb-8 [&>p]:leading-8 [&>p]:text-[18px]
+  prose-strong:text-red-600 prose-strong:font-bold
+  prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-2xl"
+  dangerouslySetInnerHTML={{
+    __html: article.content
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/\n/g, "<br/>")
+      .replace(/^/, "<p>")
+      .replace(/$/, "</p>")
+  }}
+/>
+   {/* SOCIAL MEDIA SHARE CARD VIEW */}
               <div className="mt-20 p-8 md:p-12 bg-gray-900 rounded-[2rem] text-center shadow-2xl">
                 <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-6">Share this story</p>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-8 tracking-tighter">Did you find this insightful? <br/> Spread the knowledge.</h3>

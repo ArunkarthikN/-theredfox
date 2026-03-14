@@ -18,7 +18,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-gray-500 text-sm mt-4 max-w-xs">
-              Automated news aggregator delivering the latest in Tech, AI, and Business.
+             The Red Fox is a premier digital destination for real-time news and deep-dive insights. We leverage advanced automation to curate the most critical developments in Technology, AI, and the global business landscape, ensuring you stay ahead of the curve.            
             </p>
           </div>
 
