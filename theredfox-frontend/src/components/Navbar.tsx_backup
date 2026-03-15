@@ -27,7 +27,8 @@ export default function Navbar() {
           <Link href="/category/crypto" className="hover:text-red-600 transition-colors text-orange-500">Crypto</Link>
           <Link href="/category/business" className="hover:text-red-600 transition-colors">Business</Link>
           <Link href="/category/sports" className="hover:text-red-600 transition-colors">Sports</Link>
-        </div>
+          <Link href="/category/Finance" className="hover:text-red-600 transition-colors">Finance</Link>
+         </div>
 
         {/* Mobile Hamburger Icon */}
         <button 

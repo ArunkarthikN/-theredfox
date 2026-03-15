@@ -1,0 +1,138 @@
+import Navbar from "../../components/Navbar";
+import ArticleCard from "../../components/ArticleCard";
+
+/**
+ * Premium Search Results Page for The Red Fox
+ * Optimized for alignment, spacing, and a professional news aesthetic.
+ */
+
+interface SearchPageProps {
+  searchParams: Promise<{ q?: string }>;
+}
+
+async function getSearchResults(query: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
+  
+  try {
+    const res = await fetch(`${apiUrl}/articles/search?q=${encodeURIComponent(query)}`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('Failed to fetch');
+    return res.json();
+  } catch (error) {
+    console.error("Search fetch error:", error);
+    return [];
+  }
+}
+
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const sParams = await searchParams;
+  const query = sParams.q || "";
+  const results = query ? await getSearchResults(query) : [];
+
+  return (
+    <main className="bg-[#f8f9fa] min-h-screen pb-20 text-gray-900">
+      <Navbar />
+      
+      <div className="max-w-7xl mx-auto px-4 md:px-8 mt-12">
+        {/* Refined Header - More Compact & Professional */}
+        <header className="mb-10 border-b border-gray-200 pb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-10 h-[3px] bg-red-600 rounded-full"></span>
+              <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.5em]">
+                Archive Search
+              </p>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none">
+              {query ? (
+                <>Results for <span className="text-red-600 italic">"{query}"</span></>
+              ) : (
+                "Search The Red Fox"
+              )}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-3 bg-white border border-gray-100 px-5 py-2.5 rounded-2xl shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+            </span>
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+              Found <span className="text-gray-900">{results.length}</span> matching stories
+            </p>
+          </div>
+        </header>
+
+        {/* Optimized Grid - Better spacing and card alignment */}
+        {results.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {results.map((article: any) => (
+              <a 
+                key={article.id} 
+                href={`/article/${article.slug}`}
+                className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-red-100 hover:shadow-xl hover:shadow-red-600/5 transition-all duration-300 flex flex-col h-full"
+              >
+                {/* Image Container with fixed Aspect Ratio */}
+                <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                  <img 
+                    src={article.image || '/placeholder.jpg'} 
+                    alt={article.title}
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-red-600 text-white text-[9px] font-black uppercase px-2.5 py-1 rounded-lg shadow-lg">
+                      {article.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content Area with alignment helpers */}
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-base font-black leading-tight text-gray-900 group-hover:text-red-600 transition-colors line-clamp-2 mb-3 min-h-[3rem]">
+                    {article.title}
+                  </h3>
+                  
+                  <p className="text-xs text-gray-500 font-medium leading-relaxed line-clamp-3 mb-6">
+                    {article.summary || article.content?.replace(/<[^>]*>/g, '').substring(0, 120) + "..."}
+                  </p>
+                  
+                  {/* Bottom info stays aligned */}
+                  <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      {new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <div className="flex items-center gap-1 text-red-600 text-[10px] font-black uppercase tracking-widest">
+                      <span>Full Story</span>
+                      <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          /* High-End Empty State */
+          <div className="bg-white p-20 rounded-[3rem] shadow-sm border border-gray-100 text-center max-w-2xl mx-auto mt-16">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8">
+              <span className="text-4xl">🔎</span>
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">No stories found.</h3>
+            <p className="text-gray-500 mb-10 font-medium leading-relaxed">
+              We couldn't find any articles matching "{query}". <br/>
+              Try using more general keywords like "Finance" or "Tech".
+            </p>
+            <a 
+              href="/" 
+              className="inline-block px-10 py-4 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+            >
+              Return to Feed
+            </a>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}

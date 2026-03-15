@@ -54,6 +54,35 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /search
+ * Searches articles by title, summary, or content.
+ */
+router.get('/search', async (req, res) => {
+    const pool = req.app.get('db');
+    const { q } = req.query;
+
+    if (!q) {
+        return res.status(400).json({ error: "Search query is required" });
+    }
+
+    try {
+        const query = `
+            SELECT id, title, slug, category, summary, image, created_at, views
+            FROM articles
+            WHERE title ILIKE $1 OR summary ILIKE $1 OR content ILIKE $1
+            ORDER BY created_at DESC
+            LIMIT 20
+        `;
+        
+        const result = await pool.query(query, [`%${q}%`]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("❌ Search Error:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+/**
  * GET /post/:slug
  * Fetches a single article and increments the view count
  */
@@ -62,10 +91,8 @@ router.get('/post/:slug', async (req, res) => {
     const { slug } = req.params;
 
     try {
-        // Increment view count in database
         await pool.query('UPDATE articles SET views = views + 1 WHERE slug = $1', [slug]);
 
-        // Fetch the article data
         const query = 'SELECT * FROM articles WHERE slug = $1';
         const result = await pool.query(query, [slug]);
 
@@ -115,3 +142,4 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
+
