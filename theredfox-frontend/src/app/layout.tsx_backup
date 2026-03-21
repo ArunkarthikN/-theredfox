@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "The Red Fox | Latest News & Insights",
-  description: "Your automated source for Technology, AI, Crypto, and Business news.",
+  description: "Explore the intersection of innovation and industry. The Red Fox delivers real-time news, expert analysis, and deep insights into AI, Cryptocurrency, and the evolving world of Technology and Business.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",

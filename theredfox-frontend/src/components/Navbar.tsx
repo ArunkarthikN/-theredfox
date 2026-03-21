@@ -18,7 +18,7 @@ export default function Navbar() {
     { name: 'Entertainment', href: '/category/Entertainment', color: 'text-orange-500' },
     { name: 'Business', href: '/category/business' },
     { name: 'World', href: '/category/World' },
-    { name: 'Finance', href: '/category/finance' },
+    { name: 'Weather', href: '/category/Weather' },
   ];
 
   return (

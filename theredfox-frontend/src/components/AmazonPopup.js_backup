@@ -1,0 +1,130 @@
+"use client";
+import { useState, useEffect } from 'react';
+
+const AmazonPopup = () => {
+    const [isVisible, setIsVisible] = useState(false);
+    const [targetLink, setTargetLink] = useState('https://amzn.to/4sxxjM8'); // Default to USA
+
+    const countryLinks = {
+        IN: 'https://amzn.to/4lFIGia', // India
+        US: 'https://amzn.to/4sxxjM8', // USA
+        CA: 'https://amzn.to/4rMeIe0'  // Canada
+    };
+
+    const imageUrl = "https://cdn.grabon.in/gograbon/indulge/wp-content/uploads/Benefits-of-a-Amazon-Prime-Membership.jpg";
+
+    // Function to handle redirection and closing
+    const handleRedirectAndClose = (e) => {
+        if (e) e.stopPropagation();
+        // Open the country-specific link in a new tab
+        window.open(targetLink, '_blank', 'noopener,noreferrer');
+        // Close the popup
+        setIsVisible(false);
+    };
+
+    useEffect(() => {
+        // 1. Detect Country via Free API
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                const code = data.country_code;
+                setTargetLink(countryLinks[code] || countryLinks.US);
+            })
+            .catch(() => setTargetLink(countryLinks.US));
+
+        // 2. Timer Logic
+        const showPopup = () => setIsVisible(true);
+
+        // Initial appearance after 5 seconds
+        const initialTimer = setTimeout(showPopup, 5000);
+
+        // Re-appear every 30 seconds
+        const repeatTimer = setInterval(showPopup, 30000);
+
+        return () => {
+            clearTimeout(initialTimer);
+            clearInterval(repeatTimer);
+        };
+    }, []);
+
+    if (!isVisible) return null;
+
+    return (
+        /* Overlay now redirects and closes */
+        <div style={styles.overlay} onClick={handleRedirectAndClose}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+                {/* Close Button now redirects and closes */}
+                <button 
+                    style={styles.closeBtn} 
+                    onClick={handleRedirectAndClose}
+                >
+                    ×
+                </button>
+                <a 
+                    href={targetLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    onClick={() => setIsVisible(false)} /* Close when image is clicked too */
+                >
+                    <img 
+                        src={imageUrl} 
+                        alt="Amazon Prime Offer" 
+                        style={styles.image}
+                    />
+                </a>
+            </div>
+        </div>
+    );
+};
+
+const styles = {
+    overlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 99999,
+        cursor: 'pointer', // Show pointer to indicate it's clickable
+    },
+    modal: {
+        position: 'relative',
+        width: '300px',
+        height: '250px',
+        backgroundColor: '#fff',
+        borderRadius: '10px',
+        boxShadow: '0 5px 20px rgba(0,0,0,0.5)',
+        overflow: 'hidden',
+    },
+    closeBtn: {
+        position: 'absolute',
+        top: '5px',
+        right: '10px',
+        background: 'rgba(0,0,0,0.7)', // Slightly darker for better visibility
+        color: 'white',
+        border: 'none',
+        borderRadius: '50%',
+        width: '28px',
+        height: '28px',
+        cursor: 'pointer',
+        fontSize: '20px',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2,
+    },
+    image: {
+        width: '300px',
+        height: '250px',
+        display: 'block',
+        cursor: 'pointer',
+        objectFit: 'cover',
+    }
+};
+
+export default AmazonPopup;
