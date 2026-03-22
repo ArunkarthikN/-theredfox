@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 const AmazonPopup = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [targetLink, setTargetLink] = useState('https://amzn.to/4sxxjM8');
+    const isFirstShowDone = useRef(false); 
     const checkIntervalRef = useRef(null);
 
     const countryLinks = {
@@ -14,16 +15,23 @@ const AmazonPopup = () => {
 
     const imageUrl = "https://cdn.grabon.in/gograbon/indulge/wp-content/uploads/Benefits-of-a-Amazon-Prime-Membership.jpg";
 
-    const handleRedirectAndClose = (e) => {
-        if (e) e.stopPropagation();
+    // THE MAIN ACTION: Open Affiliate Link + Close Popup
+    const handleAffiliateAction = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Open the geo-targeted link
         window.open(targetLink, '_blank', 'noopener,noreferrer');
+        
+        // Close and start the 1-minute cooldown
         setIsVisible(false);
-        // Save current time as the last shown time
         localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
     };
 
     useEffect(() => {
-        // 1. Detect Country
+        // 1. Geo-Targeting
         fetch('https://ipapi.co/json/')
             .then(res => res.json())
             .then(data => {
@@ -31,24 +39,28 @@ const AmazonPopup = () => {
             })
             .catch(() => setTargetLink(countryLinks.US));
 
-        // 2. Logic to check if we should show the popup
-        const attemptShowPopup = () => {
-            const lastShown = localStorage.getItem('amazon_popup_last_shown');
-            const now = Date.now();
-
-            // Show if it has never been shown OR 60 seconds (60,000ms) have passed
-            if (!lastShown || now - parseInt(lastShown) >= 60000) {
-                setIsVisible(true);
-                // Update timestamp immediately when it appears
-                localStorage.setItem('amazon_popup_last_shown', now.toString());
-            }
+        // 2. Display Logic
+        const showPopup = () => {
+            setIsVisible(true);
+            localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
         };
 
-        // Initial delay: 5 seconds after page load
-        const initialTimer = setTimeout(attemptShowPopup, 5000);
+        // STEP A: Initial 5-second trigger
+        const initialTimer = setTimeout(() => {
+            showPopup();
+            isFirstShowDone.current = true;
+        }, 5000);
 
-        // Check every 10 seconds to see if the cooldown is over
-        checkIntervalRef.current = setInterval(attemptShowPopup, 10000);
+        // STEP B: 1-minute interval check
+        checkIntervalRef.current = setInterval(() => {
+            const lastShown = localStorage.getItem('amazon_popup_last_shown');
+            const now = Date.now();
+            
+            // Only trigger if the first 5s pop is done AND 60s has passed
+            if (isFirstShowDone.current && (now - parseInt(lastShown) >= 60000)) {
+                showPopup();
+            }
+        }, 5000); // Check every 5s if the 1-minute cooldown is over
 
         return () => {
             clearTimeout(initialTimer);
@@ -59,32 +71,29 @@ const AmazonPopup = () => {
     if (!isVisible) return null;
 
     return (
-        <div style={styles.overlay} onClick={() => {
-            setIsVisible(false); 
-            localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
-        }}>
+        /* TRANSPARENT OVERLAY: 
+           onClick here handles the background click to open the link.
+        */
+        <div style={styles.overlay} onClick={handleAffiliateAction}>
+            
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+                
+                {/* Close Button: Same function as background */}
                 <button 
                     style={styles.closeBtn} 
-                    onClick={handleRedirectAndClose}
+                    onClick={handleAffiliateAction}
                 >
                     ×
                 </button>
-                <a 
-                    href={targetLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        handleRedirectAndClose();
-                    }}
-                >
+
+                {/* Main Image: Same function as background */}
+                <div style={styles.imageContainer} onClick={handleAffiliateAction}>
                     <img 
                         src={imageUrl} 
-                        alt="Amazon Prime Offer" 
-                        style={styles.image}
+                        alt="Amazon Prime" 
+                        style={styles.image} 
                     />
-                </a>
+                </div>
             </div>
         </div>
     );
@@ -95,48 +104,55 @@ const styles = {
         position: 'fixed',
         top: 0,
         left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Transparent dark background
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 99999,
-        cursor: 'pointer',
+        zIndex: 100000,
+        cursor: 'pointer', // Shows the hand icon in the transparent area
     },
     modal: {
         position: 'relative',
-        width: '300px',
-        height: '250px',
+        width: '90%',
+        maxWidth: '320px',
+        aspectRatio: '300 / 250',
         backgroundColor: '#fff',
         borderRadius: '12px',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+        boxShadow: '0 10px 50px rgba(0,0,0,0.7)',
         overflow: 'hidden',
+        cursor: 'default',
     },
     closeBtn: {
         position: 'absolute',
-        top: '8px',
+        top: '10px',
         right: '10px',
-        background: 'rgba(0,0,0,0.7)',
-        color: 'white',
+        background: 'rgba(0,0,0,0.8)',
+        color: '#fff',
         border: 'none',
         borderRadius: '50%',
-        width: '28px',
-        height: '28px',
+        width: '36px',
+        height: '36px',
         cursor: 'pointer',
-        fontSize: '20px',
+        fontSize: '26px',
         fontWeight: 'bold',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 2,
+        zIndex: 10,
+    },
+    imageContainer: {
+        width: '100%',
+        height: '100%',
+        cursor: 'pointer',
     },
     image: {
-        width: '300px',
-        height: '250px',
+        width: '100%',
+        height: '100%',
         display: 'block',
-        cursor: 'pointer',
         objectFit: 'cover',
+        WebkitTapHighlightColor: 'transparent',
     }
 };
 

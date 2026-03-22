@@ -1,59 +1,69 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const AmazonPopup = () => {
     const [isVisible, setIsVisible] = useState(false);
-    const [targetLink, setTargetLink] = useState('https://amzn.to/4sxxjM8'); // Default to USA
+    const [targetLink, setTargetLink] = useState('https://amzn.to/4sxxjM8');
+    const checkIntervalRef = useRef(null);
 
     const countryLinks = {
-        IN: 'https://amzn.to/4lFIGia', // India
-        US: 'https://amzn.to/4sxxjM8', // USA
-        CA: 'https://amzn.to/4rMeIe0'  // Canada
+        IN: 'https://amzn.to/4lFIGia',
+        US: 'https://amzn.to/4sxxjM8',
+        CA: 'https://amzn.to/4rMeIe0'
     };
 
     const imageUrl = "https://cdn.grabon.in/gograbon/indulge/wp-content/uploads/Benefits-of-a-Amazon-Prime-Membership.jpg";
 
-    // Function to handle redirection and closing
     const handleRedirectAndClose = (e) => {
         if (e) e.stopPropagation();
-        // Open the country-specific link in a new tab
         window.open(targetLink, '_blank', 'noopener,noreferrer');
-        // Close the popup
         setIsVisible(false);
+        // Save current time as the last shown time
+        localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
     };
 
     useEffect(() => {
-        // 1. Detect Country via Free API
+        // 1. Detect Country
         fetch('https://ipapi.co/json/')
             .then(res => res.json())
             .then(data => {
-                const code = data.country_code;
-                setTargetLink(countryLinks[code] || countryLinks.US);
+                setTargetLink(countryLinks[data.country_code] || countryLinks.US);
             })
             .catch(() => setTargetLink(countryLinks.US));
 
-        // 2. Timer Logic
-        const showPopup = () => setIsVisible(true);
+        // 2. Logic to check if we should show the popup
+        const attemptShowPopup = () => {
+            const lastShown = localStorage.getItem('amazon_popup_last_shown');
+            const now = Date.now();
 
-        // Initial appearance after 5 seconds
-        const initialTimer = setTimeout(showPopup, 5000);
+            // Show if it has never been shown OR 60 seconds (60,000ms) have passed
+            if (!lastShown || now - parseInt(lastShown) >= 60000) {
+                setIsVisible(true);
+                // Update timestamp immediately when it appears
+                localStorage.setItem('amazon_popup_last_shown', now.toString());
+            }
+        };
 
-        // Re-appear every 30 seconds
-        const repeatTimer = setInterval(showPopup, 30000);
+        // Initial delay: 5 seconds after page load
+        const initialTimer = setTimeout(attemptShowPopup, 5000);
+
+        // Check every 10 seconds to see if the cooldown is over
+        checkIntervalRef.current = setInterval(attemptShowPopup, 10000);
 
         return () => {
             clearTimeout(initialTimer);
-            clearInterval(repeatTimer);
+            if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
         };
     }, []);
 
     if (!isVisible) return null;
 
     return (
-        /* Overlay now redirects and closes */
-        <div style={styles.overlay} onClick={handleRedirectAndClose}>
+        <div style={styles.overlay} onClick={() => {
+            setIsVisible(false); 
+            localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
+        }}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-                {/* Close Button now redirects and closes */}
                 <button 
                     style={styles.closeBtn} 
                     onClick={handleRedirectAndClose}
@@ -64,7 +74,10 @@ const AmazonPopup = () => {
                     href={targetLink} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    onClick={() => setIsVisible(false)} /* Close when image is clicked too */
+                    onClick={(e) => {
+                        e.preventDefault();
+                        handleRedirectAndClose();
+                    }}
                 >
                     <img 
                         src={imageUrl} 
@@ -84,27 +97,27 @@ const styles = {
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 99999,
-        cursor: 'pointer', // Show pointer to indicate it's clickable
+        cursor: 'pointer',
     },
     modal: {
         position: 'relative',
         width: '300px',
         height: '250px',
         backgroundColor: '#fff',
-        borderRadius: '10px',
-        boxShadow: '0 5px 20px rgba(0,0,0,0.5)',
+        borderRadius: '12px',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
         overflow: 'hidden',
     },
     closeBtn: {
         position: 'absolute',
-        top: '5px',
+        top: '8px',
         right: '10px',
-        background: 'rgba(0,0,0,0.7)', // Slightly darker for better visibility
+        background: 'rgba(0,0,0,0.7)',
         color: 'white',
         border: 'none',
         borderRadius: '50%',
