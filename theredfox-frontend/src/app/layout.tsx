@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import Footer from "@/components/Footer";
-import AmazonPopup from "@/components/AmazonPopup"; // Import the new component
+import AmazonPopup from "@/components/AmazonPopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,12 +15,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Update the Metadata to include Canonical support
 export const metadata: Metadata = {
+  metadataBase: new URL("https://theredfox.us"), // Sets the base for all relative URLs
   title: "The Red Fox | Latest News & Insights",
   description: "Explore the intersection of innovation and industry. The Red Fox delivers real-time news, expert analysis, and deep insights into AI, Cryptocurrency, and the evolving world of Technology and Business.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
+  },
+  alternates: {
+    canonical: "/", // This tells Google the main URL is the master version
   },
 };
 
@@ -57,7 +62,7 @@ export default function RootLayout({
         </main>
 
         <Footer />
-        
+
         {/* Amazon Associate Popup */}
         <AmazonPopup />
       </body>

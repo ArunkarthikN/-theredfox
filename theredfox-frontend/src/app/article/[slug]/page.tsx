@@ -21,7 +21,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       return { title: 'Article Not Found | The Red Fox' };
     }
 
-    // Dynamic SEO values from the post data
     return {
       title: `${article.title} | The Red Fox`,
       description: article.meta_description || article.summary || "Latest news from The Red Fox.",
@@ -61,6 +60,21 @@ export default async function ArticleDetail({ params }: PageProps) {
   const shareUrl = encodeURIComponent(`https://theredfox.us/article/${slug}`);
   const shareTitle = encodeURIComponent(article.title);
 
+  // --- INTERNAL LINK MAPPING LOGIC ---
+  const categorySeoMap: Record<string, { label: string; path: string }> = {
+    ai: { label: "AI Technology Insights", path: "/category/ai" },
+    geopolitics: { label: "Global Geopolitics", path: "/category/geopolitics" },
+    world: { label: "Latest World News", path: "/category/world" },
+    weather: { label: "Weather Updates", path: "/category/weather" },
+    finance: { label: "Financial Markets Analysis", path: "/category/finance" },
+    technology: { label: "Tech Industry Trends", path: "/category/technology" },
+    entertainment: { label: "Entertainment & Media Insights", path: "/category/entertainment" },
+    business: { label: "Global Business & Industry Trends", path: "/category/business" },
+    crypto: { label: "Cryptocurrency Market News", path: "/category/crypto" },
+  };
+
+  const seoLink = categorySeoMap[article.category?.toLowerCase()] || { label: "Latest News & Insights", path: "/" };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
@@ -75,7 +89,6 @@ export default async function ArticleDetail({ params }: PageProps) {
                 {article.category || 'General'}
               </span>
 
-              {/* VIEW COUNT DISPLAY */}
               <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
                 <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full text-gray-600">
                   <span className="text-sm">👁️</span> {article.views || 0} Views
@@ -142,9 +155,20 @@ export default async function ArticleDetail({ params }: PageProps) {
                     .replace(/$/, "</p>")
                 }}
               />
-              
+
+              {/* --- AUTOMATED INTERNAL SEO LINK --- */}
+              <div className="mt-12 py-6 border-t border-b border-gray-100">
+                <p className="text-gray-600 italic">
+                  Explore more expert analysis and breaking updates in our{" "}
+                  <Link href={seoLink.path} className="text-red-600 font-bold hover:underline">
+                    {seoLink.label}
+                  </Link>{" "}
+                  section.
+                </p>
+              </div>
+
               {/* SOCIAL MEDIA SHARE CARD VIEW */}
-              <div className="mt-20 p-8 md:p-12 bg-gray-900 rounded-[2rem] text-center shadow-2xl">
+              <div className="mt-12 p-8 md:p-12 bg-gray-900 rounded-[2rem] text-center shadow-2xl">
                 <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] mb-6">Share this story</p>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-8 tracking-tighter">Did you find this insightful? <br/> Spread the knowledge.</h3>
                 <div className="flex flex-wrap justify-center gap-4">
