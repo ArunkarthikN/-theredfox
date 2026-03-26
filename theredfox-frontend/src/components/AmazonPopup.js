@@ -11,7 +11,8 @@ const AmazonPopup = () => {
     const countryLinks = {
         IN: 'https://amzn.to/4lFIGia',
         US: 'https://amzn.to/4sxxjM8',
-        CA: 'https://amzn.to/4rMeIe0'
+        CA: 'https://amzn.to/4rMeIe0',
+        SG: 'https://amzn.to/4sArhtS'
     };
 
     const imageUrl = "https://cdn.grabon.in/gograbon/indulge/wp-content/uploads/Benefits-of-a-Amazon-Prime-Membership.jpg";

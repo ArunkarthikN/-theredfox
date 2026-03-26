@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 const AmazonPopup = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [targetLink, setTargetLink] = useState('https://amzn.to/4sxxjM8');
-    const isFirstShowDone = useRef(false); 
+    const [userCountry, setUserCountry] = useState('Unknown'); // New state for tracking
+    const isFirstShowDone = useRef(false);
     const checkIntervalRef = useRef(null);
 
     const countryLinks = {
@@ -15,17 +16,22 @@ const AmazonPopup = () => {
 
     const imageUrl = "https://cdn.grabon.in/gograbon/indulge/wp-content/uploads/Benefits-of-a-Amazon-Prime-Membership.jpg";
 
-    // THE MAIN ACTION: Open Affiliate Link + Close Popup
     const handleAffiliateAction = (e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
-        
-        // Open the geo-targeted link
+
+        // --- GOOGLE ANALYTICS TRACKING ---
+        if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'amazon_popup_click', {
+                'event_category': 'Affiliate',
+                'event_label': userCountry, // Tracks the country (IN, US, CA)
+                'value': 1
+            });
+        }
+
         window.open(targetLink, '_blank', 'noopener,noreferrer');
-        
-        // Close and start the 1-minute cooldown
         setIsVisible(false);
         localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
     };
@@ -35,9 +41,14 @@ const AmazonPopup = () => {
         fetch('https://ipapi.co/json/')
             .then(res => res.json())
             .then(data => {
-                setTargetLink(countryLinks[data.country_code] || countryLinks.US);
+                const code = data.country_code || 'US';
+                setUserCountry(code); // Save for tracking
+                setTargetLink(countryLinks[code] || countryLinks.US);
             })
-            .catch(() => setTargetLink(countryLinks.US));
+            .catch(() => {
+                setUserCountry('FailedFetch');
+                setTargetLink(countryLinks.US);
+            });
 
         // 2. Display Logic
         const showPopup = () => {
@@ -45,22 +56,18 @@ const AmazonPopup = () => {
             localStorage.setItem('amazon_popup_last_shown', Date.now().toString());
         };
 
-        // STEP A: Initial 5-second trigger
         const initialTimer = setTimeout(() => {
             showPopup();
             isFirstShowDone.current = true;
         }, 5000);
 
-        // STEP B: 1-minute interval check
         checkIntervalRef.current = setInterval(() => {
             const lastShown = localStorage.getItem('amazon_popup_last_shown');
             const now = Date.now();
-            
-            // Only trigger if the first 5s pop is done AND 60s has passed
             if (isFirstShowDone.current && (now - parseInt(lastShown) >= 60000)) {
                 showPopup();
             }
-        }, 5000); // Check every 5s if the 1-minute cooldown is over
+        }, 5000);
 
         return () => {
             clearTimeout(initialTimer);
@@ -71,34 +78,18 @@ const AmazonPopup = () => {
     if (!isVisible) return null;
 
     return (
-        /* TRANSPARENT OVERLAY: 
-           onClick here handles the background click to open the link.
-        */
         <div style={styles.overlay} onClick={handleAffiliateAction}>
-            
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-                
-                {/* Close Button: Same function as background */}
-                <button 
-                    style={styles.closeBtn} 
-                    onClick={handleAffiliateAction}
-                >
-                    ×
-                </button>
-
-                {/* Main Image: Same function as background */}
+                <button style={styles.closeBtn} onClick={handleAffiliateAction}>×</button>
                 <div style={styles.imageContainer} onClick={handleAffiliateAction}>
-                    <img 
-                        src={imageUrl} 
-                        alt="Amazon Prime" 
-                        style={styles.image} 
-                    />
+                    <img src={imageUrl} alt="Amazon Prime" style={styles.image} />
                 </div>
             </div>
         </div>
     );
 };
 
+// ... styles remain the same ...
 const styles = {
     overlay: {
         position: 'fixed',
@@ -106,12 +97,12 @@ const styles = {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Transparent dark background
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 100000,
-        cursor: 'pointer', // Shows the hand icon in the transparent area
+        cursor: 'pointer',
     },
     modal: {
         position: 'relative',

@@ -1,0 +1,67 @@
+server {
+    server_name theredfox.us www.theredfox.us;
+
+    # Frontend (Next.js)
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Pass real IPs for Analytics and Bot detection
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /test-ip {
+        return 200 "$remote_addr | $http_cf_connecting_ip | $realip_remote_addr\n";
+    }
+
+    # Backend API (Node.js/Express)
+    location /api/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        client_max_body_size 10M;
+    }
+
+    # Automation (n8n)
+    location /n8n/ {
+        proxy_pass http://localhost:5678;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+
+        chunked_transfer_encoding off;
+        proxy_buffering off;
+        proxy_cache off;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/theredfox.us/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/theredfox.us/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+# CLEAN REDIRECT BLOCK
+# This handles the "Page with redirect" issue by forcing everything to HTTPS
+server {
+    listen 80;
+    server_name theredfox.us www.theredfox.us;
+
+    # Redirect all HTTP requests to HTTPS permanently
+    return 301 https://theredfox.us$request_uri;
+}
